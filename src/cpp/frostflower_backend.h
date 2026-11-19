@@ -15,6 +15,7 @@ struct SimParams {
     float alpha;
     float gamma;
     float dt;
+    float tau;          // NEW: phase-field relaxation time, seconds
 };
 
 SimulatorImpl* create(size_t nx, size_t ny, size_t nz,

@@ -95,7 +95,9 @@ public:
 
   // ---- Physics parameters -----------------------------------------------
   void set_parameters(float u_inf, float eps6, float eps_z, float diffusion_D,
-                      float latent_K, float alpha, float gamma, float dt) {
+                      float latent_K, float alpha, float gamma, float dt,
+                      float tau = 1.0f) // NEW, default 1.0
+  {
     frostflower::backend::SimParams p{
         .u_inf = u_inf,
         .eps6 = eps6,
@@ -105,6 +107,7 @@ public:
         .alpha = alpha,
         .gamma = gamma,
         .dt = dt,
+        .tau = tau,
     };
     frostflower::backend::set_parameters(m_impl, p);
   }
@@ -249,7 +252,7 @@ NB_MODULE(frostflower_module, m) {
       // ----------------------------------------------------
       .def("set_parameters", &FrostSimulator::set_parameters, "u_inf"_a,
            "eps6"_a, "eps_z"_a, "diffusion_D"_a, "latent_K"_a, "alpha"_a,
-           "gamma"_a, "dt"_a,
+           "gamma"_a, "dt"_a, "tau"_a = 1.0f,
            R"doc(
             Set the physical parameters of the phase-field model.
 
@@ -284,6 +287,21 @@ NB_MODULE(frostflower_module, m) {
                 substeps (e.g. for the explicit phase-field update) and an
                 implicit solve for diffusion, so this is the amount of
                 physical time advanced per external ``step()`` call.
+            tau : float, optional
+                Phase-field relaxation time, in seconds.  Default 1.0.
+
+                Larger values give physically correct (slow) interface
+                kinetics — the interface velocity scales as
+                ``v = (m - 0.5) * W0 / (2 * tau)``, so realistic frost
+                growth of millimetre features can require 10^4 -- 10^5
+                timesteps.
+
+                Smaller values (e.g. 0.01 -- 0.1) speed up the interface
+                by that factor at the cost of proportionally tightening
+                the explicit phase-field CFL bound.  The wall-clock cost
+                per unit of simulated time is roughly unchanged because
+                the CFL bound scales with ``tau``.  Use 0.01 -- 0.05 for
+                visually compelling demos; use 1.0 for physical realism.
          )doc")
 
       // ---- step
